@@ -1,0 +1,11 @@
+- add more examples, datasets
+- add errors, warnings, function checks
+- warnings wenn IRWLS und CM pooled
+- show method?
+- improve starting values for BFGS
+
+
+- lme4?
+- pooling several parameters with IRWLS?
+- pooling plus nuisance?
+
