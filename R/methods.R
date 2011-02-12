@@ -14,12 +14,8 @@ setMethod(f="wald", signature="mcprofile", definition=function(object){
   fsplist <- lapply(wsrdp, function(z){
     try(interpSpline(z[,2], z[,1]), silent=TRUE)
   })
-  bsplist <- lapply(wsrdp, function(z){
-    try(interpSpline(z[,1], z[,2]), silent=TRUE)
-  })
   object@SRDP <- wsrdp
   object@fsplines <- fsplist
-  object@bsplines <- bsplist
   return(object)
 })
 
@@ -57,16 +53,8 @@ setMethod(f="hoa", signature="mcprofile", definition=function(object){
   fsplist <- lapply(monsrdp, function(z){
     try(interpSpline(z[,2], z[,1]), silent=TRUE)
   })
-  bsplist <- lapply(monsrdp, function(z){
-    try(interpSpline(z[,1], z[,2]), silent=TRUE)
-  })
-  object@estimate <- unlist(lapply(bsplist, function(spl){
-    ep <- try(predict(spl, 0)$y, silent=TRUE)
-    if (class(ep) == "try-error") NA else ep
-  }))
   object@SRDP <- hsrdp
   object@fsplines <- fsplist
-  object@bsplines <- bsplist
   return(object)
 })
 
@@ -129,23 +117,31 @@ setMethod("confint", signature="mcprofile", definition=function(object, parm="mi
     adjust <- "user-defined"
   }
   if (alternative == "two.sided"){
-    ci <- data.frame(t(sapply(object@bsplines, function(x, quant){
-      pc <- try(c(predict(x, -quant)$y, predict(x, quant)$y), silent=TRUE)
-      if (class(pc) == "try-error") c(NA, NA) else pc
+    ci <- data.frame(t(sapply(object@fsplines, function(x, quant){
+      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
+      upper <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=quant)$root, silent=TRUE)
+      if (class(upper)[1] == "try-error") upper <- NA
+      lower <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=-quant)$root, silent=TRUE)
+      if (class(lower)[1] == "try-error") lower <- NA
+      c(lower, upper)
     }, quant=quant)))
     names(ci) <- c("lower", "upper")
   }
   if (alternative == "less"){
-    ci <- data.frame(sapply(object@bsplines, function(x, quant){
-      pc <- try(rbind(predict(x, quant)$y), silent=TRUE)
-      if (class(pc) == "try-error") rbind(c(NA)) else pc
+    ci <- data.frame(sapply(object@fsplines, function(x, quant){
+      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
+      upper <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=quant)$root, silent=TRUE)
+      if (class(upper)[1] == "try-error") upper <- NA
+      cbind(c(upper))
     }, quant=quant))
     names(ci) <- "upper"
   }
   if (alternative == "greater"){
-    ci <- data.frame(sapply(object@bsplines, function(x, quant){
-      pc <- try(rbind(predict(x, -quant)$y), silent=TRUE)
-      if (class(pc) == "try-error") rbind(c(NA)) else pc
+    ci <- data.frame(sapply(object@fsplines, function(x, quant){
+      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
+      lower <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=-quant)$root, silent=TRUE)
+      if (class(lower)[1] == "try-error") lower <- NA
+      cbind(c(lower))
     }, quant=quant))
     names(ci) <- "lower"
   }  
@@ -214,26 +210,34 @@ setMethod("confint", signature="mcprofileRatio", definition=function(object, par
     adjust <- "user-defined"
   }
   if (alternative == "two.sided"){
-    ci <- data.frame(t(sapply(object@bsplines, function(x, quant){
-      pc <- try(c(predict(x, -quant)$y, predict(x, quant)$y), silent=TRUE)
-      if (class(pc) == "try-error") c(NA, NA) else pc
+    ci <- data.frame(t(sapply(object@fsplines, function(x, quant){
+      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
+      upper <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=quant)$root, silent=TRUE)
+      if (class(upper)[1] == "try-error") upper <- NA
+      lower <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=-quant)$root, silent=TRUE)
+      if (class(lower)[1] == "try-error") lower <- NA
+      c(lower, upper)
     }, quant=quant)))
     names(ci) <- c("lower", "upper")
   }
   if (alternative == "less"){
-    ci <- data.frame(sapply(object@bsplines, function(x, quant){
-      pc <- try(rbind(predict(x, quant)$y), silent=TRUE)
-      if (class(pc) == "try-error") rbind(c(NA)) else pc
+    ci <- data.frame(sapply(object@fsplines, function(x, quant){
+      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
+      upper <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=quant)$root, silent=TRUE)
+      if (class(upper)[1] == "try-error") upper <- NA
+      cbind(c(upper))
     }, quant=quant))
     names(ci) <- "upper"
   }
   if (alternative == "greater"){
-    ci <- data.frame(sapply(object@bsplines, function(x, quant){
-      pc <- try(rbind(predict(x, -quant)$y), silent=TRUE)
-      if (class(pc) == "try-error") rbind(c(NA)) else pc
+    ci <- data.frame(sapply(object@fsplines, function(x, quant){
+      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
+      lower <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=-quant)$root, silent=TRUE)
+      if (class(lower)[1] == "try-error") lower <- NA
+      cbind(c(lower))
     }, quant=quant))
     names(ci) <- "lower"
-  }  
+  }   
   new(Class="mcpconfint", confint=ci, quantile=quant, estimate=object@estimate, alternative=alternative, adjust=adjust)
 })
 

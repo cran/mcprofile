@@ -137,10 +137,7 @@ mcpcalcRatioBFGS <- function(object, CMn, CMd, control=mcprofileControl(), margi
   fsplist <- lapply(SRDP, function(z){
     try(interpSpline(z[,2], z[,1]), silent=TRUE)
   })
-  bsplist <- lapply(SRDP, function(z){
-    try(interpSpline(z[,1], z[,2]), silent=TRUE)
-  })
-  new(Class="mcprofileRatio", CMn=CMn, CMd=CMd, estimate=estimate, model=mod, SRDP=SRDP, fsplines=fsplist, bsplines=bsplist, control=control, method="BFGS")
+  new(Class="mcprofileRatio", CMn=CMn, CMd=CMd, estimate=estimate, model=mod, SRDP=SRDP, fsplines=fsplist, control=control, method="BFGS")
 }
 
 
@@ -244,10 +241,7 @@ mcpcalcnlsRatio <- function(object, CMn, CMd, control=mcprofileControl(), margin
   fsplist <- lapply(SRDP, function(z){
     try(interpSpline(z[,2], z[,1]), silent=TRUE)
   })
-  bsplist <- lapply(SRDP, function(z){
-    try(interpSpline(z[,1], z[,2]), silent=TRUE)
-  })
-  new(Class="mcprofileRatio", CMn=CMn, CMd=CMd, estimate=estimate, model=list(df=df.residual(object)), SRDP=SRDP, fsplines=fsplist, bsplines=bsplist, control=control, method="BFGS")
+  new(Class="mcprofileRatio", CMn=CMn, CMd=CMd, estimate=estimate, model=list(df=df.residual(object)), SRDP=SRDP, fsplines=fsplist, control=control, method="BFGS")
 }
   
 

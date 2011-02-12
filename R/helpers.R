@@ -48,7 +48,7 @@ glmobj <- function(object){
 condOpt <- function(object, X, offset, start=NULL){
   object$offset <- offset
   object$X <- X
-  fm <- glm.fit(object$X, object$response, weights=object$weights,etastart=object$fitted,offset=object$offset,family=object$family,control=object$control, start=start)
+  fm <- glm.fit(object$X, object$response, weights=object$weights,etastart=object$fitted,offset=object$offset,family=object$family,control=glm.control(maxit = 2000), start=start)
   class(fm) <- c("glm")
   object$coefficients <- coefficients(fm)
   object$deviance <- deviance(fm)
@@ -58,6 +58,7 @@ condOpt <- function(object, X, offset, start=NULL){
   object$converged <- fm$converged
   return(object)
 }
+
 
 
 ### deviance calculation

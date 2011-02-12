@@ -1,8 +1,13 @@
-\name{mcpcalcIRWLS}
+\name{mcpcalc_methods}
+\alias{mcpcalcBFGS}
 \alias{mcpcalcIRWLS}
+\alias{mcpcalcnls}
+\alias{mcpcalcmer}
+\alias{mcpcalcmerlmer}
+
 \title{Construction of Multiple Contrast Profiles} 
 \description{Only for internal use. Calculating profiles by rearranging
-  the design matrix}
+  the design matrix (IRWLS, lmer) or with an optim wrapper using BFGS method}
 
 \usage{
 mcpcalcIRWLS(object, CM, control=mcprofileControl(), margin=NULL)
@@ -20,9 +25,8 @@ mcpcalcIRWLS(object, CM, control=mcprofileControl(), margin=NULL)
 
 \details{
   According to the rows of a contrast matrix the design matrix of
-a model is restructured by \code{\link{makeDesign}}. The parameter of
-interest is then profiled as in function \code{\link{profile.glm}}.  The
-signed root deviance is calculated and interpolated by interpolation splines.  
+a model is restructured by \code{\link{makeDesign}} (IRWLS, lmer). For
+  several constrained model fits the signed root deviance is calculated and interpolated by interpolation splines.  
 }
 
 \value{ An object inheriting from class \code{\linkS4class{mcprofile}}

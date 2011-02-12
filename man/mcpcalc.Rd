@@ -3,14 +3,15 @@
 \alias{mcpcalc.lm}
 \alias{mcpcalc.glm}
 \alias{mcpcalc.nls}
+\alias{mcpcalc.mer}
 \title{Construction of Multiple Contrast Profiles} 
-\description{Calculates signed root deviance profiles given a \code{\link{glm}} or \code{\link{lm}} object.  The profiled parameters of interest are defined by
-  providing a contrast matrix.  }
+\description{Calculates signed root deviance profiles given a \code{\link{glm}} or \code{\link{lm}} object.  The profiled parameters of interest are defined by providing a contrast matrix. The functions handling \code{\link{lmer}} and \code{\link{nls}} objects is only experimental; please handle with care.  }
 
 \usage{
 \method{mcpcalc}{lm}(object, CM, control=mcprofileControl(), margin=NULL, method="BFGS")
 \method{mcpcalc}{glm}(object, CM, control=mcprofileControl(), margin=NULL, method="BFGS")
 \method{mcpcalc}{nls}(object, CM, control=mcprofileControl(), margin=NULL, method="BFGS")
+\method{mcpcalc}{mer}(object, CM, control=mcprofileControl(), margin=NULL, method="BFGS")
 }
 
 \arguments{

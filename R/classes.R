@@ -6,7 +6,6 @@ setClass("mcprofile", representation(CM = "matrix",
                                      model = "list",
                                      SRDP = "list",
                                      fsplines = "list",
-                                     bsplines = "list",
                                      control = "list",
                                      method = "character"))
 
@@ -34,7 +33,6 @@ setClass("mcprofileRatio", representation(CMn = "matrix",
                                           model = "list",
                                           SRDP = "list",
                                           fsplines = "list",
-                                          bsplines = "list",
                                           control = "list",
                                           method = "character"))   
 

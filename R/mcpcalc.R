@@ -15,6 +15,13 @@ mcpcalc.nls <- function(object, CM, control=mcprofileControl(), margin=NULL, met
   if (method == "IRWLS") stop("IRWLS optimisation not available.")
   if (method == "BFGS") return(mcpcalcnls(object, CM, control, margin))      
 }
+
+
+mcpcalc.mer <- function(object, CM, control=mcprofileControl(), margin=NULL, method="BFGS"){
+  if (method == "IRWLS") return(mcpcalcmerlmer(object, CM, control, margin))  
+  if (method == "BFGS") return(mcpcalcmer(object, CM, control, margin))   
+}
+
 #############################
 
 mcpcalcIRWLS <- function(object, CM, control=mcprofileControl(), margin=NULL){
@@ -119,10 +126,7 @@ mcpcalcIRWLS <- function(object, CM, control=mcprofileControl(), margin=NULL){
   fsplist <- lapply(SRDP, function(z){
     try(interpSpline(z[,2], z[,1]), silent=TRUE)
   })
-  bsplist <- lapply(SRDP, function(z){
-    try(interpSpline(z[,1], z[,2]), silent=TRUE)
-  })
-  new(Class="mcprofile", CM=CM, estimate=estimate, vest=vest, vestunsc=vestunsc, dvest=dvest, model=mod, SRDP=SRDP, fsplines=fsplist, bsplines=bsplist, control=control, method="IRWLS")
+  new(Class="mcprofile", CM=CM, estimate=estimate, vest=vest, vestunsc=vestunsc, dvest=dvest, model=mod, SRDP=SRDP, fsplines=fsplist, control=control, method="IRWLS")
 }
 
 
@@ -191,7 +195,7 @@ mcpcalcBFGS <- function(object, CM, control=mcprofileControl(), margin=NULL){
         bopt[w] <- bo
         offs <- X[,!neg,drop=FALSE] %*% bopt[!neg] + off
         startc <- get("startc", envir=.start)
-        cfm <- glm.fit(xi,y,weights=mod$weights,etastart=mod$fitted,offset=offs,family=mod$family,control=mod$control, start=startc)
+        cfm <- glm.fit(xi,y,weights=mod$weights,etastart=mod$fitted,offset=offs,family=mod$family,control=glm.control(maxit = 2000), start=startc)
         class(cfm) <- "glm"
         assign(".DV", summary(cfm)$cov.unscaled, envir = .denvi)
         assign("startc", cfm$coefficients, envir = .start)
@@ -233,7 +237,7 @@ mcpcalcBFGS <- function(object, CM, control=mcprofileControl(), margin=NULL){
         bopt[w] <- bo
         offs <- X[,!neg,drop=FALSE] %*% bopt[!neg] + off
         startc <- get("startc", envir=.start)
-        cfm <- glm.fit(xi,y,weights=mod$weights,etastart=mod$fitted,offset=offs,family=mod$family,control=mod$control, start=startc)
+        cfm <- glm.fit(xi,y,weights=mod$weights,etastart=mod$fitted,offset=offs,family=mod$family,control=glm.control(maxit = 2000), start=startc)
         class(cfm) <- "glm"
         assign(".DV", summary(cfm)$cov.unscaled, envir = .denvi)
         assign("startc", cfm$coefficients, envir = .start)
@@ -268,10 +272,7 @@ mcpcalcBFGS <- function(object, CM, control=mcprofileControl(), margin=NULL){
   fsplist <- lapply(SRDP, function(z){
     try(interpSpline(z[,2], z[,1]), silent=TRUE)
   })
-  bsplist <- lapply(SRDP, function(z){
-    try(interpSpline(z[,1], z[,2]), silent=TRUE)
-  })
-  new(Class="mcprofile", CM=CM, estimate=estimate, vest=vest, vestunsc=vestunsc, dvest=dvest, model=mod, SRDP=SRDP, fsplines=fsplist, bsplines=bsplist, control=control, method="BFGS")
+  new(Class="mcprofile", CM=CM, estimate=estimate, vest=vest, vestunsc=vestunsc, dvest=dvest, model=mod, SRDP=SRDP, fsplines=fsplist, control=control, method="BFGS")
 }
 
 
@@ -405,10 +406,7 @@ mcpcalcnls <- function(object, CM, control=mcprofileControl(), margin=NULL){
   fsplist <- lapply(SRDP, function(z){
     try(interpSpline(z[,2], z[,1]), silent=TRUE)
   })
-  bsplist <- lapply(SRDP, function(z){
-    try(interpSpline(z[,1], z[,2]), silent=TRUE)
-  })
-  new(Class="mcprofile", CM=CM, estimate=estimate, vest=vest, vestunsc=vest, dvest=dvest, model=list(df=df.residual(object)), SRDP=SRDP, fsplines=fsplist, bsplines=bsplist, control=control, method="BFGS")
+  new(Class="mcprofile", CM=CM, estimate=estimate, vest=vest, vestunsc=vest, dvest=dvest, model=list(df=df.residual(object)), SRDP=SRDP, fsplines=fsplist, control=control, method="BFGS")
 }
   
 

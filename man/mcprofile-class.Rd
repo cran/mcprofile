@@ -29,7 +29,6 @@
       deviance estimates z, the parameter of interest b, and the
       conditional variance estimates}
     \item{\code{fsplines}:}{A list of interpolation spline functions predicting z given b}
-    \item{\code{bsplines}:}{A list of interpolation spline functions predicting b given z}
   }
 }
 \section{Methods}{

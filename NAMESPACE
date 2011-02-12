@@ -9,6 +9,8 @@ export(mcpcalc,
        mcpcalcIRWLS,
        mcpcalcBFGS,
        mcpcalcnls,
+       mcpcalcmer,
+       mcpcalcmerlmer,
        mcpcalcRatio,
        mcpcalcRatioBFGS,
        mcpcalcnlsRatio,
@@ -20,6 +22,7 @@ exportMethods("initialize","show","wald","hoa","confint","exp","expit","test","p
 S3method(mcpcalc, lm)
 S3method(mcpcalc, glm)
 S3method(mcpcalc, nls)
+S3method(mcpcalc, mer)
 S3method(mcpcalcRatio, lm)
 S3method(mcpcalcRatio, glm)
 S3method(mcpcalcRatio, nls)
