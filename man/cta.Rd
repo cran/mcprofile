@@ -1,5 +1,4 @@
 \name{cta}
-\Rdversion{1.1}
 \alias{cta}
 \docType{data}
 \title{Cell transformation assay dataset}
@@ -12,7 +11,5 @@
     \item{\code{foci}}{a numeric vector with the number of foci}
   }
 }
-\references{
-Thomas C (2008): ECVAM data
-}
+\references{Thomas C (2008): ECVAM data}
 \keyword{datasets}

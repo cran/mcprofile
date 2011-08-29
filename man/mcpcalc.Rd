@@ -2,42 +2,45 @@
 \alias{mcpcalc}
 \alias{mcpcalc.lm}
 \alias{mcpcalc.glm}
-\alias{mcpcalc.nls}
-\alias{mcpcalc.mer}
-\title{Construction of Multiple Contrast Profiles} 
-\description{Calculates signed root deviance profiles given a \code{\link{glm}} or \code{\link{lm}} object.  The profiled parameters of interest are defined by providing a contrast matrix. The functions handling \code{\link{lmer}} and \code{\link{nls}} objects is only experimental; please handle with care.  }
+
+\title{Construction of Multiple Contrast Profiles}
+
+\description{Calculates signed root deviance profiles given a \code{\link{glm}} or \code{\link{lm}} object. The profiled parameters of interest are defined by providing a contrast matrix.}
 
 \usage{
-\method{mcpcalc}{lm}(object, CM, control=mcprofileControl(), margin=NULL, method="BFGS")
-\method{mcpcalc}{glm}(object, CM, control=mcprofileControl(), margin=NULL, method="BFGS")
-\method{mcpcalc}{nls}(object, CM, control=mcprofileControl(), margin=NULL, method="BFGS")
-\method{mcpcalc}{mer}(object, CM, control=mcprofileControl(), margin=NULL, method="BFGS")
+mcpcalc(object, CM, control = mcprofileControl(), margin = NULL)
+\method{mcpcalc}{lm}(object, CM, control=mcprofileControl(), margin=NULL)
+\method{mcpcalc}{glm}(object, CM, control=mcprofileControl(), margin=NULL)
 }
 
 \arguments{
   \item{object}{An object of class \code{\link{glm}} or \code{\link{lm}}}
-  \item{CM}{A contrast matrix with the number of columns equal the
-  number of estimated parameters.  Contrast coefficients should be -1
-  and 1, respectively.  Providing row names is recommendable.}
+  \item{CM}{A contrast matrix for the definition of parameter linear
+  combinations (\code{CM \%*\% coefficients(object)}). The number of columns should be equal to the number of estimated parameters. Providing row names is recommendable.}
   \item{control}{A list with control arguments. See \code{\link{mcprofileControl}}.}
-  \item{margin}{Numeric vector of margins, defining the profiling
-  range.  If \code{NULL} no extra margin is considered.}
-  \item{method}{"IRWLS", "BFGS"}
+  \item{margin}{Numeric vector of margins, defining the profiling range
+  with stepsize defined in the steps slot of the control argument list
+  in \code{\link{mcprofileControl}}.  If \code{NULL} no extra margin is
+  considered, and the stepsize is chosen automatically.}
 }
 
-\details{
-  According to the rows of a contrast matrix the design matrix of
-a model is restructured by \code{\link{makeDesign}}. The parameter of
-interest is then profiled as in function \code{\link{profile.glm}} or \code{\link{profile.nls}}.  The
-signed root deviance is calculated and interpolated by interpolation splines.
+\value{An object of class mcprofile. The slot \code{srdp} contains the
+  profiled signed root deviance statistics.}
+
+\details{The profiles are calculates separately for each row of the
+  contrast matrix. With single non-zero entries in a contrast matrix,
+  the \code{\link{glm.fit}} function is used for optimization. With two
+  non-zero entries in a contrast, one-dimensional optimization is
+  performed by \code{\link{optimize}} for the second non-zero contrast parameter conditional on
+  the parameter linear combination and all other nuisance
+  parameters. For all higher dimensional optimization problems, the BFGS
+  method in \code{\link{optim}} is used.
 }
 
-\value{ An object inheriting from class \code{\linkS4class{mcprofile}}
-  with methods \code{\link{show}}, \code{\link{plot}},
-  \code{\link{confint}}, and \code{\link{test}}}
+\author{Daniel Gerhard}
 
-\seealso{\code{\link{profile.glm}}, \code{\link{profile.nls}}, \code{\link{glht}}, \code{\link{interpSpline}}, \code{\link{contrMat}}}
-
+\seealso{\code{\link[MASS]{profile.glm}}, \code{\link[multcomp]{glht}},
+  \code{\link[multcomp]{contrMat}}, \code{\link{confint.mcprofile}}, \code{\link{summary.mcprofile}}}
 
 \examples{
 #######################################
@@ -59,26 +62,13 @@ fm <- glm(foci ~ concf-1, data=cta, poisson(link="log"))
 CM <- contrMat(table(cta$concf), type="Dunnett")
 
 # calculating signed root deviance profiles
-(dmcp <- mcpcalc(fm, CM, method="IRWLS"))
+(dmcp <- mcpcalc(fm, CM))
 # plot profiles
 plot(dmcp)
-
-# multiplicity adjusted p-values
-(adjpv <- test(dmcp,adjust="single-step",alternative="two.sided",margin=0))
-plot(adjpv, alpha=0.05, order=FALSE)
-plot(dmcp, adjpv)
-
-# simultaneous confidence intervals
-(ci <- confint(dmcp, adjust="single-step"))
-# exponent of confidence limits --> ratio of group means
-exp(ci)
-
-plot(exp(ci))
-abline(v=1, lty=2)
-
-plot(dmcp, ci)
+# confidence intervals
+(ci <- confint(dmcp))
+plot(ci)
 }
 
-\keyword{models}
-\keyword{optimize}
-
+\keyword{ models }
+\keyword{ optimize }

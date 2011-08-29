@@ -1,425 +1,118 @@
-## Quadratic approximation
-setGeneric("wald",function(object){standardGeneric("wald")})
-setMethod(f="wald", signature="mcprofile", definition=function(object){
-  SRDP <- object@SRDP
-  est <- object@estimate
-  cvu <- object@vest
-  wsrdp <- lapply(1:length(SRDP), function(i){
-    srdpi <- SRDP[[i]]
-    b <- srdpi[,2]
-    srdpi[,1] <- (b-est[i])/sqrt(cvu[i])
+exp.mcpCI <-
+function(x){
+  x$estimate <- exp(x$estimate)
+  x$confint <- exp(x$confint)
+  return(x)
+}
+expit.mcpCI <-
+function(x){
+  expit <- function(x) exp(x)/(1 + exp(x))
+  x$estimate <- expit(x$estimate)
+  x$confint <- expit(x$confint)
+  return(x)
+}
+plot.mcpCI <-
+function(x, ...){
+  require(ggplot2)
+  Estimate <- x$estimate
+  CM <- x$CM
+  grp <- factor(rownames(CM), levels=rownames(CM)[nrow(CM):1])
+  cidat <- data.frame(grp, Estimate)
+  if (x$alternative == "two.sided"){
+    lower <- x$confint$lower
+    upper <- x$confint$upper    
+    cidat$lower <- lower
+    cidat$upper <- upper
+    print(ggplot(cidat, aes(x=Estimate, y=grp, xmin=lower, xmax=upper)) + geom_errorbarh(height=0.3) + geom_point() + ylab("") + xlab(""))
+  }
+  if (x$alternative == "less"){
+    upper <- x$confint$upper
+    cidat$upper <- upper
+    xmin <- min(x$estimate) - 0.1*max(apply(cidat[,-1], 1, diff))
+    print(ggplot(cidat, aes(x=Estimate, y=grp, yend=grp, xmax=upper)) + geom_errorbarh(height=0.3, xmin=NA) + geom_segment(aes(x=upper), xend=xmin) + geom_point() + ylab("") + xlab(""))
+  }
+  if (x$alternative == "greater"){
+    lower <- x$confint$lower
+    cidat$lower <- lower
+    xmax <- max(x$estimate) - 0.1*min(apply(cidat[,-1], 1, diff))
+    print(ggplot(cidat, aes(x=Estimate, y=grp, yend=grp, xmin=lower)) + suppressWarnings(geom_errorbarh(height=0.3, xmax=NA)) + geom_segment(aes(x=lower), xend=xmax) + geom_point() + ylab("") + xlab(""))
+  }
+}
+plot.mcprofile <-
+function(x, ...){
+  require(ggplot2)
+  require(splines)
+  sdlist <- x$srdp  
+  CM <- x$CM
+  nr <- sapply(sdlist, nrow)
+  grp <- factor(rep(rownames(CM), nr), levels=rownames(CM))
+  b1 <- unlist(lapply(sdlist, function(x) x[,1]))
+  z1 <- unlist(lapply(sdlist, function(x) x[,2]))
+  sdd <- data.frame(b=b1, z=z1, grp)
+
+  spl <- lapply(sdlist, function(x){
+    x <- na.omit(x)
+    sp <- try(interpSpline(x$b, x$z))
+    bcoord <- seq(min(x$b), max(x$b), length=200)
+    preds <- if (class(sp)[1] == "try-error") y <- rep(NA, 200) else predict(sp, x=bcoord)$y
+    data.frame(b=bcoord, z=preds)
+  })
+  pgrp <- factor(rep(rownames(CM), each=200), levels=rownames(CM))
+  b2 <- unlist(lapply(spl, function(x) x[,1]))
+  z2 <- unlist(lapply(spl, function(x) x[,2]))
+  spd <- data.frame(b=b2, z=z2, grp=pgrp)
+  
+  ggplot(spd, aes(x=b, y=z)) + geom_line() + facet_wrap(~grp, scales = "free_x") + geom_hline(yintercept=0, linetype=2) + geom_point(data=sdd, shape="|")
+}
+print.mcpCI <-
+function(x, ...){
+  cat("\n   mcprofile - Confidence Intervals \n\n")
+  cat("level: \t\t", x$level,"\n")
+  cat("adjustment:\t", x$adjust,"\n\n")
+  print(data.frame(Estimate=x$estimate, x$confint), digits=3)
+  cat("\n")
+}
+print.mcprofile <-
+function(x, ...){
+  cat("\n   Multiple Contrast Profiles\n\n")
+  est <- x$CM %*% coefficients(x$object)
+  vest <- x$CM %*% vcov(x$object) %*% t(x$CM)
+  sdest <- sqrt(diag(vest))
+  print(data.frame(Estimate=est, Std.err=sdest), digits=3)
+  cat("\n")
+}
+print.mcpSummary <-
+function(x, ...){
+  cat("\n   mcprofile - Multiple Testing\n\n")
+  cat("Adjustment:\t", x$adjust, "\n")
+  cat("Margin:  \t", x$margin, "\n")
+  cat("Alternative:\t", x$alternative, "\n\n")
+  dat <- data.frame(round(x$CM %*% x$estimate,2), round(x$statistic,2), round(x$p.values,3))
+  pname <- switch(x$alternative, less = paste("Pr(<", ifelse(is.null(x$df), "z", "t"), ")", sep = ""), greater = paste("Pr(>", ifelse(is.null(x$df), "z", "t"), ")", sep = ""), two.sided = paste("Pr(>|", ifelse(is.null(x$df), "z", "t"), "|)", sep = ""))
+  names(dat) <- c("Estimate", "Statistic", pname)
+  alt <- switch(x$alternative, two.sided = "==", less = ">=", greater = "<=")
+  rownames(dat) <- paste(rownames(dat), alt, x$margin)
+  error <- attr(x$p.values, "error")
+  if (!is.null(error) && error > .Machine$double.eps) {
+    sig <- which.min(abs(1/error - (10^(1:10))))
+    sig <- 1/(10^sig)
+  } else {
+    sig <- .Machine$double.eps
+  }
+  printCoefmat(dat, digits = max(3, getOption("digits") - 3), has.Pvalue = TRUE, P.values = TRUE, eps.Pvalue = sig)
+  cat("\n")
+}
+wald <-
+function(object){
+  srdp <- object$srdp
+  est <- object$CM %*% coefficients(object$object)
+  sde <- sqrt(diag(object$CM %*% vcov(object$object) %*% t(object$CM)))
+  wsrdp <- lapply(1:length(srdp), function(i){
+    srdpi <- srdp[[i]]
+    b <- srdpi[,1]
+    srdpi[,2] <- (b-est[i])/sde[i]
     srdpi 
   })
-  names(wsrdp) <- names(SRDP)
-  fsplist <- lapply(wsrdp, function(z){
-    try(interpSpline(z[,2], z[,1]), silent=TRUE)
-  })
-  object@SRDP <- wsrdp
-  object@fsplines <- fsplist
+  object$srdp <- wsrdp
   return(object)
-})
-
-### higher order approximations
-setGeneric("hoa",function(object){standardGeneric("hoa")})
-setMethod(f="hoa", signature="mcprofile", definition=function(object){
-  SRDP <- object@SRDP
-  est <- object@estimate
-  cvu <- object@vestunsc
-  dv <- object@dvest
-  disp <- object@model$dispersion
-  hsrdp <- lapply(1:length(SRDP), function(i){
-    srdpi <- SRDP[[i]]
-    b <- srdpi[,2]
-    r <- srdpi[,1]*sqrt(disp)
-    q <- (b-est[i])/sqrt(cvu[i])
-    j <- 1/dv[i]
-    jp <- 1/cvu[i]
-    j1 <- j/jp
-    j0 <- 1/srdpi[,3]
-    rho <- sqrt(j1/j0)
-    srdpi[,1] <- (r + log(rho*q/r) / r)*1/sqrt(disp)
-    srdpi <- srdpi[!is.nan(srdpi[,1]),]
-    srdpi
-  })
-  monsrdp <- lapply(1:length(hsrdp), function(i){
-    srdat <- hsrdp[[i]]
-    ml <- srdat[srdat$b < est[i],]
-    mll <- ml[1:(nrow(ml)-2),]
-    mu <- srdat[srdat$b > est[i],]
-    muu <- mu[3:nrow(mu),]
-    rbind(mll, muu)
-  })
-  names(monsrdp) <- names(hsrdp) <- names(SRDP)  
-  fsplist <- lapply(monsrdp, function(z){
-    try(interpSpline(z[,2], z[,1]), silent=TRUE)
-  })
-  object@SRDP <- hsrdp
-  object@fsplines <- fsplist
-  return(object)
-})
-
-
-#### confidence intervals
-setMethod("confint", signature="mcprofile", definition=function(object, parm="missing", level=0.95, adjust="single-step", alternative="two.sided", quant=NULL){
-  if (is.null(quant)){
-    pam <- c("bonferroni", "none", "single-step")
-    if (!(adjust %in% pam)) stop(paste("adjust has to be one of:", paste(pam, collapse=", ")))
-    CM <- object@CM
-    df <- object@model$df
-    df <- if (!is.na(df)) df else NULL
-    cr <- NULL
-    if (adjust == "none" | nrow(CM) == 1){
-      if (alternative == "two.sided"){
-        alpha <- (1-level)/2
-      } else {
-        alpha <- 1-level
-      }
-      if (is.null(df)){
-        quant <- qnorm(1-alpha)
-      } else {
-        quant <- qt(1-alpha, df=df)
-      }
-    }
-    if (adjust == "bonferroni"){
-      if (alternative == "two.sided"){
-        alpha <- (1-level)/2
-      } else {
-        alpha <- 1-level
-      }
-      if (is.null(df)){
-        quant <- qnorm(1-alpha/nrow(CM))
-      } else {
-        quant <- qt(1-alpha/nrow(CM), df=df)
-      }
-    }
-    if (adjust == "single-step" & nrow(CM) > 1){
-      require(mvtnorm)
-      vc <- object@model$vcov
-      VC <- CM %*% vc %*% t(CM)
-      d <- 1/sqrt(diag(VC))
-      dd <- diag(d)
-      cr <- dd %*% VC %*% dd
-      if (alternative == "two.sided"){
-        if (is.null(df)){
-          quant <- qmvnorm(level, corr=cr, tail="both.tails")$quantile
-        } else {
-          quant <- qmvt(level, df=df, corr=cr, tail="both.tails")$quantile
-        }
-      } else {
-        if (is.null(df)){
-          quant <- qmvnorm(level, corr=cr, tail="lower.tail")$quantile
-        } else {
-          quant <- qmvt(level, df=df, corr=cr, tail="lower.tail")$quantile
-        }
-      }
-    }
-  } else {
-    adjust <- "user-defined"
-  }
-  if (alternative == "two.sided"){
-    ci <- data.frame(t(sapply(object@fsplines, function(x, quant){
-      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
-      upper <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=quant)$root, silent=TRUE)
-      if (class(upper)[1] == "try-error") upper <- NA
-      lower <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=-quant)$root, silent=TRUE)
-      if (class(lower)[1] == "try-error") lower <- NA
-      c(lower, upper)
-    }, quant=quant)))
-    names(ci) <- c("lower", "upper")
-  }
-  if (alternative == "less"){
-    ci <- data.frame(sapply(object@fsplines, function(x, quant){
-      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
-      upper <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=quant)$root, silent=TRUE)
-      if (class(upper)[1] == "try-error") upper <- NA
-      cbind(c(upper))
-    }, quant=quant))
-    names(ci) <- "upper"
-  }
-  if (alternative == "greater"){
-    ci <- data.frame(sapply(object@fsplines, function(x, quant){
-      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
-      lower <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=-quant)$root, silent=TRUE)
-      if (class(lower)[1] == "try-error") lower <- NA
-      cbind(c(lower))
-    }, quant=quant))
-    names(ci) <- "lower"
-  }  
-  new(Class="mcpconfint", confint=ci, quantile=quant, estimate=object@estimate, alternative=alternative, adjust=adjust)
-})
-
-
-setMethod("confint", signature="mcprofileRatio", definition=function(object, parm="missing", level=0.95, adjust="single-step", alternative="two.sided", quant=NULL){
-  if (is.null(quant)){
-    pam <- c("bonferroni", "none", "single-step")
-    if (!(adjust %in% pam)) stop(paste("adjust has to be one of:", paste(pam, collapse=", ")))
-    CMn <- object@CMn
-    CMd <- object@CMd
-    df <- object@model$df
-    df <- if (!is.na(df)) df else NULL
-    cr <- NULL
-    if (adjust == "none" | nrow(CMn) == 1){
-      if (alternative == "two.sided"){
-        alpha <- (1-level)/2
-      } else {
-        alpha <- 1-level
-      }
-      if (is.null(df)){
-        quant <- qnorm(1-alpha)
-      } else {
-        quant <- qt(1-alpha, df=df)
-      }
-    }
-    if (adjust == "bonferroni"){
-      if (alternative == "two.sided"){
-        alpha <- (1-level)/2
-      } else {
-        alpha <- 1-level
-      }
-      if (is.null(df)){
-        quant <- qnorm(1-alpha/nrow(CMn))
-      } else {
-        quant <- qt(1-alpha/nrow(CMn), df=df)
-      }
-    }
-    if (adjust == "single-step" & nrow(CMn) > 1){
-      require(mvtnorm)
-      est <- object@estimate
-      vc <- object@model$vcov
-      cr <- matrix(rep(NA, nrow(CMn) * nrow(CMn)), nrow = nrow(CMn))
-      for (i in 1:nrow(CMn)) {
-        for (j in 1:nrow(CMn)) {
-          cr[i,j] <- (est[i] * CMd[i,] - CMn[i,]) %*% vc %*% (est[j] * CMd[j,] - CMn[j,])/(sqrt((est[i] * CMd[i,] - CMn[i,]) %*% vc %*% (est[i] * CMd[i,] - CMn[i,])) * sqrt((est[j] * CMd[j,] - CMn[j,]) %*% vc %*% (est[j] * CMd[j,] - CMn[j,])))
-        }
-      }
-      if (alternative == "two.sided"){
-        if (is.null(df)){
-          quant <- qmvnorm(level, corr=cr, tail="both.tails")$quantile
-        } else {
-          quant <- qmvt(level, df=df, corr=cr, tail="both.tails")$quantile
-        }
-      } else {
-        if (is.null(df)){
-          quant <- qmvnorm(level, corr=cr, tail="lower.tail")$quantile
-        } else {
-          quant <- qmvt(level, df=df, corr=cr, tail="lower.tail")$quantile
-        }
-      }
-    }
-  } else {
-    adjust <- "user-defined"
-  }
-  if (alternative == "two.sided"){
-    ci <- data.frame(t(sapply(object@fsplines, function(x, quant){
-      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
-      upper <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=quant)$root, silent=TRUE)
-      if (class(upper)[1] == "try-error") upper <- NA
-      lower <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=-quant)$root, silent=TRUE)
-      if (class(lower)[1] == "try-error") lower <- NA
-      c(lower, upper)
-    }, quant=quant)))
-    names(ci) <- c("lower", "upper")
-  }
-  if (alternative == "less"){
-    ci <- data.frame(sapply(object@fsplines, function(x, quant){
-      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
-      upper <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=quant)$root, silent=TRUE)
-      if (class(upper)[1] == "try-error") upper <- NA
-      cbind(c(upper))
-    }, quant=quant))
-    names(ci) <- "upper"
-  }
-  if (alternative == "greater"){
-    ci <- data.frame(sapply(object@fsplines, function(x, quant){
-      pfun <- function(xc, obj, quant) predict(obj, xc)$y-quant
-      lower <- try(uniroot(pfun, range(predict(x)$x), obj=x, quant=-quant)$root, silent=TRUE)
-      if (class(lower)[1] == "try-error") lower <- NA
-      cbind(c(lower))
-    }, quant=quant))
-    names(ci) <- "lower"
-  }   
-  new(Class="mcpconfint", confint=ci, quantile=quant, estimate=object@estimate, alternative=alternative, adjust=adjust)
-})
-
-
-
-
-
-
-# exp ci
-setMethod(f="exp", signature="mcpconfint", definition=function(x){
-  x@estimate <- exp(x@estimate)
-  names(x@estimate) <- paste("exp( ", names(x@estimate), " )", sep="")
-  x@confint <- exp(x@confint)
-  return(x)
-})
-
-# expit ci
-setMethod(f="expit", signature="mcpconfint", definition=function(x){
-  x@estimate <- exp(x@estimate)/(1 + exp(x@estimate))
-  names(x@estimate) <- paste("expit( ", names(x@estimate), " )", sep="")
-  x@confint <- exp(x@confint)/(1 + exp(x@confint))
-  return(x)
-})
-
-
-
-## Tests
-setGeneric("test",function(object, adjust="bonferroni", alternative="two.sided", margin=0){standardGeneric("test")})
-setMethod("test", signature="mcprofile", definition=function(object, adjust="single-step", alternative="two.sided", margin=0){
-  CM <- object@CM
-  est <- object@estimate
-  df <- object@model$df
-  df <- if (!is.na(df)) df else NULL
-  if (!(alternative %in% c("two.sided", "less", "greater"))) stop("alternative has to be one of 'two.sided', 'less', or 'greater'")
-  pam <- c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none")  
-  if (!(adjust %in% c(pam, "single-step"))) stop(paste("adjust has to be one of:", paste(c(pam, "single-step"), collapse=", ")))
-  ##### Find stats
-  ptest <- function(ispl, delta){
-    pst <- try(predict(ispl, delta)$y, silent=TRUE)
-    if (class(pst) == "try-error") NA else pst   
-  }
-  stat <- sapply(object@fsplines, function(x) ptest(x, delta=margin))
-  naid <- is.na(stat)
-  stat[is.na(stat)] <- 0
-  if (is.null(df)){
-    switch(alternative, less = {
-      praw <- pnorm(stat, lower.tail=TRUE)
-    }, greater = {
-      praw <- pnorm(stat, lower.tail=FALSE)
-    }, two.sided = {
-      praw <- pmin(1, pnorm(abs(stat), lower.tail=FALSE)*2)
-    })
-  } else {
-    switch(alternative, less = {
-      praw <- pt(stat, df=df, lower.tail=TRUE)
-    }, greater = {
-      praw <- pt(stat, df=df, lower.tail=FALSE)
-    }, two.sided = {
-      praw <- pmin(1, pt(abs(stat), df=df, lower.tail=FALSE)*2)
-    })
-  }
-  if (length(praw) > 1){
-    if (adjust %in% pam) padj <- p.adjust(praw, method=adjust)
-    pfct <- function(q) {
-      switch(alternative, two.sided = {
-      	low <- rep(-abs(q), dim)
-      	upp <- rep(abs(q), dim)
-      }, less = {
-      	low <- rep(q, dim)
-      	upp <- rep(Inf, dim)
-      }, greater = {
-      	low <- rep(-Inf, dim)
-      	upp <- rep(q, dim)
-      })
-      if (is.null(df)){
-      	pmvnorm(lower = low, upper = upp, corr = cr)
-      } else {
-      	pmvt(lower = low, upper = upp, df=df, corr = cr)
-      }
-    }
-    if (adjust == "single-step"){
-      require(mvtnorm)
-      vc <- object@model$vcov
-      VC <- CM %*% vc %*% t(CM)
-      d <- 1/sqrt(diag(VC))
-      dd <- diag(d)
-      cr <- dd %*% VC %*% dd
-      dim <- ncol(cr)
-      padj <- numeric(length(stat))
-      error <- 0
-      for (i in 1:length(stat)) {
-      	tmp <- pfct(stat[i])
-      	if (error < attr(tmp, "error")) error <- attr(tmp, "error")
-      	padj[i] <- tmp
-      }
-      padj <- 1 - padj
-      attr(padj, "error") <- error
-    }
-  } else { padj <- praw }
-  stat[naid] <- NA
-  padj[naid] <- NA
-  new(Class="mcptest", stat = stat, pvalues = padj, margin = margin, estimate = est, alternative = alternative, adjust=adjust)  
-})
-
-
-setMethod("test", signature="mcprofileRatio", definition=function(object, adjust="single-step", alternative="two.sided", margin=1){
-  CMn <- object@CMn
-  CMd <- object@CMd
-  est <- object@estimate
-  df <- object@model$df
-  df <- if (!is.na(df)) df else NULL
-  if (!(alternative %in% c("two.sided", "less", "greater"))) stop("alternative has to be one of 'two.sided', 'less', or 'greater'")
-  pam <- c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none")  
-  if (!(adjust %in% c(pam, "single-step"))) stop(paste("adjust has to be one of:", paste(c(pam, "single-step"), collapse=", ")))
-  ##### Find stats
-  ptest <- function(ispl, delta){
-    pst <- try(predict(ispl, delta)$y, silent=TRUE)
-    if (class(pst) == "try-error") NA else pst   
-  }
-  stat <- sapply(object@fsplines, function(x) ptest(x, delta=margin))
-  naid <- is.na(stat)
-  stat[is.na(stat)] <- 0
-  if (is.null(df)){
-    switch(alternative, less = {
-      praw <- pnorm(stat, lower.tail=TRUE)
-    }, greater = {
-      praw <- pnorm(stat, lower.tail=FALSE)
-    }, two.sided = {
-      praw <- pmin(1, pnorm(abs(stat), lower.tail=FALSE)*2)
-    })
-  } else {
-    switch(alternative, less = {
-      praw <- pt(stat, df=df, lower.tail=TRUE)
-    }, greater = {
-      praw <- pt(stat, df=df, lower.tail=FALSE)
-    }, two.sided = {
-      praw <- pmin(1, pt(abs(stat), df=df, lower.tail=FALSE)*2)
-    })
-  }
-  if (length(praw) > 1){
-    if (adjust %in% pam) padj <- p.adjust(praw, method=adjust)
-    pfct <- function(q) {
-      switch(alternative, two.sided = {
-      	low <- rep(-abs(q), dim)
-      	upp <- rep(abs(q), dim)
-      }, less = {
-      	low <- rep(q, dim)
-      	upp <- rep(Inf, dim)
-      }, greater = {
-      	low <- rep(-Inf, dim)
-      	upp <- rep(q, dim)
-      })
-      if (is.null(df)){
-      	pmvnorm(lower = low, upper = upp, corr = cr)
-      } else {
-      	pmvt(lower = low, upper = upp, df=df, corr = cr)
-      }
-    }
-    if (adjust == "single-step"){
-      require(mvtnorm)
-      est <- object@estimate
-      vc <- object@model$vcov
-      cr <- matrix(rep(NA, nrow(CMn) * nrow(CMn)), nrow = nrow(CMn))
-      for (i in 1:nrow(CMn)) {
-        for (j in 1:nrow(CMn)) {
-          cr[i,j] <- (est[i] * CMd[i,] - CMn[i,]) %*% vc %*% (est[j] * CMd[j,] - CMn[j,])/(sqrt((est[i] * CMd[i,] - CMn[i,]) %*% vc %*% (est[i] * CMd[i,] - CMn[i,])) * sqrt((est[j] * CMd[j,] - CMn[j,]) %*% vc %*% (est[j] * CMd[j,] - CMn[j,])))
-        }
-      }
-      dim <- ncol(cr)
-      padj <- numeric(length(stat))
-      error <- 0
-      for (i in 1:length(stat)) {
-      	tmp <- pfct(stat[i])
-      	if (error < attr(tmp, "error")) error <- attr(tmp, "error")
-      	padj[i] <- tmp
-      }
-      padj <- 1 - padj
-      attr(padj, "error") <- error
-    }
-  } else { padj <- praw }
-  stat[naid] <- NA
-  padj[naid] <- NA
-  new(Class="mcptest", stat = stat, pvalues = padj, margin = margin, estimate = est, alternative = alternative, adjust=adjust)  
-})
-
+}

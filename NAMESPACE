@@ -1,28 +1,14 @@
-import(methods)
-import(graphics)
-importFrom("stats4", "confint")
-
-export(mcpcalc,
-       makeDesign,
-       pmakeDesign,
-       glmobj,
-       mcpcalcIRWLS,
-       mcpcalcBFGS,
-       mcpcalcnls,
-       mcpcalcmer,
-       mcpcalcmerlmer,
-       mcpcalcRatio,
-       mcpcalcRatioBFGS,
-       mcpcalcnlsRatio,
-       mcprofileControl)
-
-exportClasses("mcprofile", "mcpconfint", "mcptest", "mcprofileRatio")
-exportMethods("initialize","show","wald","hoa","confint","exp","expit","test","plot")
+export(mcpcalc, wald)
+exportClasses("mcprofile", "mcpCI", "mcpSummary")
 
 S3method(mcpcalc, lm)
 S3method(mcpcalc, glm)
-S3method(mcpcalc, nls)
-S3method(mcpcalc, mer)
-S3method(mcpcalcRatio, lm)
-S3method(mcpcalcRatio, glm)
-S3method(mcpcalcRatio, nls)
+S3method(print, mcprofile)
+S3method(plot, mcprofile)
+S3method(summary, mcprofile)
+S3method(confint, mcprofile)
+S3method(print, mcpCI)
+S3method(plot, mcpCI)
+S3method(print, mcpSummary)
+
+

@@ -1,5 +1,4 @@
 \name{aphidlight}
-\Rdversion{1.1}
 \alias{aphidlight}
 \docType{data}
 \title{Aphid attraction at different light intensities}
