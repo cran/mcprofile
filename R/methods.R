@@ -4,9 +4,10 @@ function(x){
   x$confint <- exp(x$confint)
   return(x)
 }
+expit <- function(x) 1/(1 + exp(-x))
 expit.mcpCI <-
 function(x){
-  expit <- function(x) exp(x)/(1 + exp(x))
+  expit <- function(x) 1/(1 + exp(-x))
   x$estimate <- expit(x$estimate)
   x$confint <- expit(x$confint)
   return(x)
@@ -18,26 +19,24 @@ function(x, ...){
   CM <- x$CM
   grp <- factor(rownames(CM), levels=rownames(CM)[nrow(CM):1])
   cidat <- data.frame(grp, Estimate)
-  if (x$alternative == "two.sided"){
-    lower <- x$confint$lower
-    upper <- x$confint$upper    
-    cidat$lower <- lower
-    cidat$upper <- upper
-    print(ggplot(cidat, aes(x=Estimate, y=grp, xmin=lower, xmax=upper)) + geom_errorbarh(height=0.3) + geom_point() + ylab("") + xlab(""))
-  }
-  if (x$alternative == "less"){
-    upper <- x$confint$upper
-    cidat$upper <- upper
-    xmin <- min(x$estimate) - 0.1*max(apply(cidat[,-1], 1, diff))
-    print(ggplot(cidat, aes(x=Estimate, y=grp, yend=grp, xmax=upper)) + geom_errorbarh(height=0.3, xmin=NA) + geom_segment(aes(x=upper), xend=xmin) + geom_point() + ylab("") + xlab(""))
-  }
-  if (x$alternative == "greater"){
-    lower <- x$confint$lower
-    cidat$lower <- lower
-    xmax <- max(x$estimate) - 0.1*min(apply(cidat[,-1], 1, diff))
-    print(ggplot(cidat, aes(x=Estimate, y=grp, yend=grp, xmin=lower)) + suppressWarnings(geom_errorbarh(height=0.3, xmax=NA)) + geom_segment(aes(x=lower), xend=xmax) + geom_point() + ylab("") + xlab(""))
-  }
+  switch(x$alternative,
+         two.sided = {
+           lower <- x$confint$lower
+           upper <- x$confint$upper
+         }, greater = {
+           lower <- x$confint$lower
+           upper <- Inf
+         }, lower = {
+           lower <- x$confint$lower
+           upper <- Inf
+         })
+  lower[is.na(lower)] <- -Inf
+  upper[is.na(upper)] <- Inf
+  cidat$lower <- lower
+  cidat$upper <- upper
+  ggplot(cidat, aes(x=Estimate, y=grp, xmin=lower, xmax=upper)) + geom_errorbarh(height=0.3) + geom_point() + ylab("") + xlab("")
 }
+
 plot.mcprofile <-
 function(x, ...){
   require(ggplot2)

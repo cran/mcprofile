@@ -37,7 +37,7 @@ function(object, K, b, start=NULL){
     X <- model.matrix(object)
     offs <- X[,!neg,drop=FALSE] %*% bopt[!neg] + off
     cfm <- glm.fit(X[,neg, drop=FALSE],object$y,weights=object$prior.weights,etastart=object$fitted,offset=offs,family=object$family,control=glm.control(maxit = 2000))
-    return(list(par=b, value=cfm$deviance))
+    return(list(par=b/K[pos], value=cfm$deviance))
   }
 }
 

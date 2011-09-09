@@ -18,9 +18,19 @@ function(object, K, control, margin){
 
   zup <- numeric(length=length(bup))
   zdown <- numeric(length=length(bdown))
-   
-  dispersion <- summary(object)$dispersion
 
+  pos <- abs(K) > 0
+  if (sum(pos) > 1) nc <- sum(pos)-1 else nc <- 1
+  parup <- matrix(nrow=length(bup), ncol=nc)
+  pardown <- matrix(nrow=length(bdown), ncol=nc)
+  if (sum(pos) > 1){
+    w <- which(pos)[1]
+    parup[1,] <- pardown[1,] <- est[-w][pos[-w]] 
+  } else {
+    parup[1,] <- pardown[1,] <- est[pos]
+  }
+  
+  dispersion <- summary(object)$dispersion
   delta <- control$cutoff/control$steps
 
   start <- NULL
@@ -32,7 +42,7 @@ function(object, K, control, margin){
       break
     }
     cdev <- copt$value
-    start <- copt$par
+    start <- parup[i,] <- copt$par
     zup[i] <- sqrt(abs(cdev - deviance(object))/dispersion)
     if (is.null(margin)){
       if (zup[i]-zup[i-1] < .Machine$double.eps){
@@ -52,6 +62,7 @@ function(object, K, control, margin){
   }
   bup <- bup[1:i]
   zup <- zup[1:i]
+  parup <- parup[1:i,, drop=FALSE]
   
   start <- NULL
   for (i in 2:(length(bdown)-1)){
@@ -62,7 +73,7 @@ function(object, K, control, margin){
       break
     }
     cdev <- copt$value
-    start <- copt$par
+    start <- pardown[i,] <- copt$par
     zdown[i] <- -sqrt(abs(cdev - deviance(object))/dispersion)
     if (is.null(margin)){
       if ((zdown[i]-zdown[i-1]) > -1*.Machine$double.eps){
@@ -82,9 +93,11 @@ function(object, K, control, margin){
   }
   bdown <- bdown[2:i]
   zdown <- zdown[2:i]
+  pardown <- pardown[2:i,,drop=FALSE]
         
   b <- c(bdown, bup)
   z <- c(zdown, zup)
-  data.frame(b, z)[order(b),]
+  optpar <- rbind(pardown, parup)[order(b),,drop=FALSE]
+  list(stats=data.frame(b, z)[order(b),], param=optpar)
 }
 

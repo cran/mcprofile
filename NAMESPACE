@@ -1,5 +1,5 @@
-export(mcpcalc, wald)
-exportClasses("mcprofile", "mcpCI", "mcpSummary")
+export(mcpcalc, wald, mcprofileControl)
+exportClasses("mcprofile", "mcpCI", "mcpSummary", "mcprofileControl")
 
 S3method(mcpcalc, lm)
 S3method(mcpcalc, glm)
@@ -9,6 +9,8 @@ S3method(summary, mcprofile)
 S3method(confint, mcprofile)
 S3method(print, mcpCI)
 S3method(plot, mcpCI)
+S3method(exp, mcpCI)
+S3method(expit, mcpCI)
 S3method(print, mcpSummary)
 
 

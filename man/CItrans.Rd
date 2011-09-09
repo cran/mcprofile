@@ -5,8 +5,8 @@
 \title{Transformation of Confidence Intervals}
 \description{Transformation of confidence interval estimates in mcpCI objects.}
 \usage{
-exp.mcpCI(x)
-expit.mcpCI(x)
+\method{exp}{mcpCI}(x)
+\method{expit}{mcpCI}(x)
 }
 
 \arguments{

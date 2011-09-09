@@ -22,16 +22,20 @@ function(object, CM, control=mcprofileControl(), margin=NULL){
   }
   
   srdp <- list()
+  optpar <- list()
   for (i in 1:nrow(CM)){
     K <- CM[i,]
-    srdp[[i]] <- glm_profiling(object, K, control, margin=mmat[i,])
+    glmpro <- glm_profiling(object, K, control, margin=mmat[i,])
+    srdp[[i]] <- glmpro[[1]]
+    optpar[[i]] <- glmpro[[2]]
   }
-  names(srdp) <- rownames(CM)
+  names(srdp) <- names(optpar) <- rownames(CM)
 
   out <- list()
   out$object <- object
   out$CM <- CM
   out$srdp <- srdp
+  out$optpar <- optpar
   if (df.needed) out$df <- df.residual(object) else df <- NULL
   class(out) <- "mcprofile"
   out
