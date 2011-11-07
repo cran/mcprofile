@@ -8,9 +8,9 @@
 \description{Calculates signed root deviance profiles given a \code{\link{glm}} or \code{\link{lm}} object. The profiled parameters of interest are defined by providing a contrast matrix.}
 
 \usage{
-mcpcalc(object, CM, control = mcprofileControl(), margin = NULL)
-\method{mcpcalc}{lm}(object, CM, control=mcprofileControl(), margin=NULL)
-\method{mcpcalc}{glm}(object, CM, control=mcprofileControl(), margin=NULL)
+mcpcalc(object, CM, control = mcprofileControl(), margin = NULL, mc.cores=1)
+\method{mcpcalc}{lm}(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1)
+\method{mcpcalc}{glm}(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1)
 }
 
 \arguments{
@@ -22,6 +22,7 @@ mcpcalc(object, CM, control = mcprofileControl(), margin = NULL)
   with stepsize defined in the steps slot of the control argument list
   in \code{\link{mcprofileControl}}.  If \code{NULL} no extra margin is
   considered, and the stepsize is chosen automatically.}
+  \item{mc.cores}{Number of cores using package \code{parallel} for parallelization.}
 }
 
 \value{An object of class mcprofile. The slot \code{srdp} contains the

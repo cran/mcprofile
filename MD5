@@ -1,9 +1,9 @@
-935524c5d85d08d40f464c70643287e1 *DESCRIPTION
+54268ec9baeb56fb8752158711194420 *DESCRIPTION
 734729a9ad941112242c968ee57f2cc6 *NAMESPACE
 389d6c59a1bb4002571f712e8bbd972b *R/Kopt.R
 9edf38441e04a179768e80ffbcc245f6 *R/confint.mcprofile.R
 b41d5f1df61aa05b1ca32583c8cb8d86 *R/glm_profiling.R
-f64cb3f94e7a71463f85aca27972c738 *R/mcpcalc.R
+ecc5f541d5a3c7259f85c9aee30629cc *R/mcpcalc.R
 3bbce8779fcea07cc583d490e4b72ef1 *R/methods.R
 143a4f0258669b6bc922d86c0006273c *R/summary.mcprofile.R
 b2b3acea94105a84f3f14fd68d3b9367 *data/aphidlight.rda
@@ -12,7 +12,7 @@ c8122707b5b91f59a6f26c820602b0d8 *data/cta.rda
 850e0155a5d0235fbdf22356d2477cd8 *man/aphidlight.Rd
 1f9dcc5c8cf4e33931ba59113caf9112 *man/confint.mcprofile.Rd
 baa8d1564507b03e0d3c71a7c7c18faf *man/cta.Rd
-84d541d85d841c0c9475247e0f9b9993 *man/mcpcalc.Rd
+eaad19e8e5fb5a848dab414acc37b889 *man/mcpcalc.Rd
 7797c8adb6d42f8d107b9b40a080b9f6 *man/mcprofile-internal.Rd
 ca804a6202ff9551b9f6974c680ec6f2 *man/mcprofile-package.Rd
 4a371ea9c232ae1dc513c61af0b25951 *man/mcprofileControl.Rd

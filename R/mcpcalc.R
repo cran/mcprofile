@@ -1,8 +1,8 @@
 mcpcalc <-
-function(object, CM, control=mcprofileControl(), margin=NULL) UseMethod("mcpcalc")
+function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1) UseMethod("mcpcalc")
 
 mcpcalc.glm <-
-function(object, CM, control=mcprofileControl(), margin=NULL){
+function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1){
   if (is.null(rownames(CM))) rownames(CM) <- paste("C",1:nrow(CM), sep="")
   if (is.null(colnames(CM))) colnames(CM) <- names(coefficients(object))
   if (ncol(CM) != length(coefficients(object))) stop("Equal number of contrast and model coefficients needed!")
@@ -20,17 +20,29 @@ function(object, CM, control=mcprofileControl(), margin=NULL){
       mmat <- margin
     }
   }
-  
-  srdp <- list()
-  optpar <- list()
-  for (i in 1:nrow(CM)){
-    K <- CM[i,]
-    glmpro <- glm_profiling(object, K, control, margin=mmat[i,])
-    srdp[[i]] <- glmpro[[1]]
-    optpar[[i]] <- glmpro[[2]]
+
+  if (mc.cores == 1){
+    srdp <- list()
+    optpar <- list()
+    for (i in 1:nrow(CM)){
+      K <- CM[i,]
+      glmpro <- glm_profiling(object, K, control, margin=mmat[i,])
+      srdp[[i]] <- glmpro[[1]]
+      optpar[[i]] <- glmpro[[2]]
+    }
+  } else {
+    require(parallel)
+    cl <- makeCluster(mc.cores)
+    glmpro <- parLapply(cl, 1:nrow(CM), function(i, CM, object, control, mmat, glm_profiling){
+      K <- CM[i,]
+      glm_profiling(object, K, control, margin=mmat[i,])      
+    }, CM=CM, object=object, control=control, mmat=mmat, glm_profiling=mcprofile:::glm_profiling)
+    stopCluster(cl)
+    srdp <- lapply(glmpro, function(x) x[[1]])
+    optpar <- lapply(glmpro, function(x) x[[2]])
   }
   names(srdp) <- names(optpar) <- rownames(CM)
-
+  
   out <- list()
   out$object <- object
   out$CM <- CM
@@ -42,7 +54,7 @@ function(object, CM, control=mcprofileControl(), margin=NULL){
 }
 
 mcpcalc.lm <-
-function(object, CM, control=mcprofileControl(), margin=NULL){
+function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1){
   oc <- as.list(object$call)
   oc$family <- call("gaussian")
   oc[[1]] <- as.symbol("glm")
