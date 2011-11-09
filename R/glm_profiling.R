@@ -98,6 +98,7 @@ function(object, K, control, margin){
   b <- c(bdown, bup)
   z <- c(zdown, zup)
   optpar <- rbind(pardown, parup)[order(b),,drop=FALSE]
-  list(stats=data.frame(b, z)[order(b),], param=optpar)
+  stdat <- data.frame(b, z)[order(b),]
+  list(stats=stdat[is.finite(stdat$z),], param=optpar[is.finite(stdat$z),])
 }
 

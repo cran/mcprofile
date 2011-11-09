@@ -15,28 +15,24 @@ function(object, K, b, start=NULL){
       bopt[w] <- bo
       bopt[neg] <- est[neg]
       offs <- X[,!neg,drop=FALSE] %*% bopt[!neg] + off
-      cfm <- glm.fit(X[,neg, drop=FALSE],object$y,weights=object$prior.weights,etastart=object$fitted,offset=offs,family=object$family,control=glm.control(maxit = 2000))
-      cfm$deviance
+      if (any(!apply(object$family$linkinv(offs), 1, object$family$validmu) & apply(X[,neg, drop=FALSE], 1, function(x) all(x == 0)))){
+        return(Inf)
+      } else {
+        cfm <- glm.fit(X[,neg, drop=FALSE],object$y,weights=object$prior.weights,start=est[neg],offset=offs,family=object$family,control=glm.control(maxit = 2000))
+        return(cfm$deviance)
+      }
     }
     w <- which(pos)[1]
     X <- model.matrix(object)
-    if (sum(pos) == 2){
-      sdp <- sqrt(diag(vcov(object))[pos][2])
-      if (is.null(start)) start <- est[-w][pos[-w]]
-      optres <- optimize(optd, interval=c(start-sdp*5, start+sdp*5))
-      names(optres) <- c("par", "value")
-      return(optres)
-    } else {
-      if (is.null(start)) start <- est[-w][pos[-w]]
-      return(optim(start, optd, method="BFGS"))
-    }
+    if (is.null(start)) start <- est[-w][pos[-w]]
+    return(optim(start, optd, method="BFGS"))
   } else {
     bopt <- numeric(length=length(K))
     bopt[(1:length(K))[pos]] <- b/K[pos]
     bopt[neg] <- est[neg]
     X <- model.matrix(object)
     offs <- X[,!neg,drop=FALSE] %*% bopt[!neg] + off
-    cfm <- glm.fit(X[,neg, drop=FALSE],object$y,weights=object$prior.weights,etastart=object$fitted,offset=offs,family=object$family,control=glm.control(maxit = 2000))
+    cfm <- glm.fit(X[,neg, drop=FALSE],object$y,weights=object$prior.weights,start=est[neg],offset=offs,family=object$family,control=glm.control(maxit = 2000))
     return(list(par=b/K[pos], value=cfm$deviance))
   }
 }

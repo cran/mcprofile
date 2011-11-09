@@ -13,6 +13,6 @@ wald(object)
 
 \author{Daniel Gerhard}
 
-\seealso{\code{\link{mcpcalc}}}
+\seealso{\code{\link{mcprofile}}}
 
 \keyword{ htest }

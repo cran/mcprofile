@@ -1,16 +1,16 @@
-\name{mcpcalc}
-\alias{mcpcalc}
-\alias{mcpcalc.lm}
-\alias{mcpcalc.glm}
+\name{mcprofile}
+\alias{mcprofile}
+\alias{mcprofile.lm}
+\alias{mcprofile.glm}
 
 \title{Construction of Multiple Contrast Profiles}
 
 \description{Calculates signed root deviance profiles given a \code{\link{glm}} or \code{\link{lm}} object. The profiled parameters of interest are defined by providing a contrast matrix.}
 
 \usage{
-mcpcalc(object, CM, control = mcprofileControl(), margin = NULL, mc.cores=1)
-\method{mcpcalc}{lm}(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1)
-\method{mcpcalc}{glm}(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1)
+mcprofile(object, CM, control = mcprofileControl(), margin = NULL, mc.cores=1)
+\method{mcprofile}{lm}(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1)
+\method{mcprofile}{glm}(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1)
 }
 
 \arguments{
@@ -30,12 +30,7 @@ mcpcalc(object, CM, control = mcprofileControl(), margin = NULL, mc.cores=1)
 
 \details{The profiles are calculates separately for each row of the
   contrast matrix. With single non-zero entries in a contrast matrix,
-  the \code{\link{glm.fit}} function is used for optimization. With two
-  non-zero entries in a contrast, one-dimensional optimization is
-  performed by \code{\link{optimize}} for the second non-zero contrast parameter conditional on
-  the parameter linear combination and all other nuisance
-  parameters. For all higher dimensional optimization problems, the BFGS
-  method in \code{\link{optim}} is used.
+  the \code{\link{glm.fit}} function is used for optimization. For all higher dimensional optimization problems, the BFGS method in \code{\link{optim}} is used.
 }
 
 \author{Daniel Gerhard}
@@ -63,7 +58,7 @@ fm <- glm(foci ~ concf-1, data=cta, poisson(link="log"))
 CM <- contrMat(table(cta$concf), type="Dunnett")
 
 # calculating signed root deviance profiles
-(dmcp <- mcpcalc(fm, CM))
+(dmcp <- mcprofile(fm, CM))
 # plot profiles
 plot(dmcp)
 # confidence intervals

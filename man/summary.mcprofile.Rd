@@ -19,6 +19,6 @@
 \value{An object of class mcpSummary}
 \author{Daniel Gerhard}
 
-\seealso{\code{\link{mcpcalc}}, \code{\link[multcomp]{summary.glht}}}
+\seealso{\code{\link{mcprofile}}, \code{\link[multcomp]{summary.glht}}}
 
 \keyword{ htest }

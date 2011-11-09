@@ -13,7 +13,7 @@ mcprofileControl(steps = 8, alphamax = 0.001, maxsteps = 200)
 }
 \author{Daniel Gerhard}
 
-\seealso{\code{\link{mcpcalc}}}
+\seealso{\code{\link{mcprofile}}}
 
 \keyword{ iteration }
 \keyword{ misc }

@@ -23,6 +23,6 @@
 \value{An object of class mcpCI}
 \author{Daniel Gerhard}
 
-\seealso{\code{\link[MASS]{confint.glm}}, \code{\link{mcpcalc}}, \code{\link[multcomp]{confint.glht}}}
+\seealso{\code{\link[MASS]{confint.glm}}, \code{\link{mcprofile}}, \code{\link[multcomp]{confint.glht}}}
 
 \keyword{ htest }

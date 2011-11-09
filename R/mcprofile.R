@@ -1,7 +1,7 @@
-mcpcalc <-
-function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1) UseMethod("mcpcalc")
+mcprofile <-
+function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1) UseMethod("mcprofile")
 
-mcpcalc.glm <-
+mcprofile.glm <-
 function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1){
   if (is.null(rownames(CM))) rownames(CM) <- paste("C",1:nrow(CM), sep="")
   if (is.null(colnames(CM))) colnames(CM) <- names(coefficients(object))
@@ -53,13 +53,13 @@ function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1){
   out
 }
 
-mcpcalc.lm <-
+mcprofile.lm <-
 function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1){
   oc <- as.list(object$call)
   oc$family <- call("gaussian")
   oc[[1]] <- as.symbol("glm")
   object <- eval(as.call(oc))
-  mcpcalc.glm(object, CM=CM, control=control, margin=margin)
+  mcprofile.glm(object, CM=CM, control=control, margin=margin)
 }
 
 
