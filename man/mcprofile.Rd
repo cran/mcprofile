@@ -8,9 +8,9 @@
 \description{Calculates signed root deviance profiles given a \code{\link{glm}} or \code{\link{lm}} object. The profiled parameters of interest are defined by providing a contrast matrix.}
 
 \usage{
-mcprofile(object, CM, control = mcprofileControl(), margin = NULL, mc.cores=1)
-\method{mcprofile}{lm}(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1)
-\method{mcprofile}{glm}(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1)
+mcprofile(object, CM, control = mcprofileControl(), grid=NULL)
+\method{mcprofile}{lm}(object, CM, control=mcprofileControl(), grid=NULL)
+\method{mcprofile}{glm}(object, CM, control=mcprofileControl(), grid=NULL)
 }
 
 \arguments{
@@ -18,25 +18,28 @@ mcprofile(object, CM, control = mcprofileControl(), margin = NULL, mc.cores=1)
   \item{CM}{A contrast matrix for the definition of parameter linear
   combinations (\code{CM \%*\% coefficients(object)}). The number of columns should be equal to the number of estimated parameters. Providing row names is recommendable.}
   \item{control}{A list with control arguments. See \code{\link{mcprofileControl}}.}
-  \item{margin}{Numeric vector of margins, defining the profiling range
-  with stepsize defined in the steps slot of the control argument list
-  in \code{\link{mcprofileControl}}.  If \code{NULL} no extra margin is
-  considered, and the stepsize is chosen automatically.}
-  \item{mc.cores}{Number of cores using package \code{parallel} for parallelization.}
+  \item{grid}{A matrix or list with profile support coordinates. Each
+  column of the matrix or slot in a list corresponds to a row in the
+  contrast matrix, each row of the grid matrix or element of a numeric
+  vector in each list slot corresponds to a candidate of the contrast
+  parameter. If NULL (default), a grid is found automatically similar to
+  function \code{\link[MASS]{profile.glm}}.}
 }
 
 \value{An object of class mcprofile. The slot \code{srdp} contains the
-  profiled signed root deviance statistics.}
+  profiled signed root deviance statistics. The \code{optpar} slot
+  contains a matrix with profiled parameter estimates.}
 
 \details{The profiles are calculates separately for each row of the
-  contrast matrix. With single non-zero entries in a contrast matrix,
-  the \code{\link{glm.fit}} function is used for optimization. For all higher dimensional optimization problems, the BFGS method in \code{\link{optim}} is used.
+  contrast matrix. The profiles are calculated by constrained IRWLS
+  optimization, implemented in function \code{orglm}, using the quadratic programming algorithm of package \code{quadprog}.
 }
 
 \author{Daniel Gerhard}
 
 \seealso{\code{\link[MASS]{profile.glm}}, \code{\link[multcomp]{glht}},
-  \code{\link[multcomp]{contrMat}}, \code{\link{confint.mcprofile}}, \code{\link{summary.mcprofile}}}
+  \code{\link[multcomp]{contrMat}}, \code{\link{confint.mcprofile}},
+  \code{\link{summary.mcprofile}}, \code{\link{orglm.fit}}, \code{\link[quadprog]{solve.QP}}}
 
 \examples{
 #######################################
@@ -66,5 +69,4 @@ plot(dmcp)
 plot(ci)
 }
 
-\keyword{ models }
-\keyword{ optimize }
+\keyword{ misc }

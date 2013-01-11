@@ -11,7 +11,7 @@ function(object, margin=0, adjust="single-step", alternative=c("two.sided","less
   sdlist <- object$srdp
   spl <- lapply(sdlist, function(x){
     x <- na.omit(x)
-    try(interpSpline(x$b, x$z))
+    try(interpSpline(x[,1], x[,2]))
   })
   ptest <- function(spl, delta){
     pst <- try(predict(spl, delta)$y, silent=TRUE)

@@ -15,4 +15,4 @@ wald(object)
 
 \seealso{\code{\link{mcprofile}}}
 
-\keyword{ htest }
+\keyword{ misc }

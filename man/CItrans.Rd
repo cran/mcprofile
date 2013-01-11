@@ -19,5 +19,4 @@
 
 \seealso{\code{\link{exp}}, \code{\link{confint.mcprofile}}}
 
-\keyword{arith}
-\keyword{methods}
+\keyword{misc}

@@ -1,48 +1,48 @@
 mcprofile <-
-function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1) UseMethod("mcprofile")
+function(object, CM, control=mcprofileControl(), grid=NULL) UseMethod("mcprofile")
 
 mcprofile.glm <-
-function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1){
+function(object, CM, control=mcprofileControl(), grid=NULL){
   if (is.null(rownames(CM))) rownames(CM) <- paste("C",1:nrow(CM), sep="")
   if (is.null(colnames(CM))) colnames(CM) <- names(coefficients(object))
   if (ncol(CM) != length(coefficients(object))) stop("Equal number of contrast and model coefficients needed!")
 
   df.needed <- family(object)$family == "gaussian" | length(grep("quasi", family(object)$family)) == 1 | length(grep("Negative Binomial", family(object)$family)) == 1
 
-  control$cutoff <- qnorm(1 - control$alphamax/nrow(CM), 1)
-  if (is.null(margin)){
-    mmat <- NULL
-  } else {
-    if (nrow(rbind(margin)) == 1){
-      mmat <- matrix(rep(margin[order(margin)], each=nrow(CM)), ncol=2, dimnames=list(rownames(CM), c("lower","upper")))
-    } else {
-      rownames(margin) <- rownames(CM)
-      mmat <- margin
-    }
-  }
+  ## construct grid
+  if (is.null(grid)) grid <- constructGrid(object, CM, control)
+  if (is.matrix(grid)) grid <- lapply(1:ncol(grid), function(i) na.omit(grid[,i]))
+  ## check grid
+  if (length(grid) != nrow(CM)) stop("Number of contrasts and grid support vectors differ!")
+  if (any(sapply(grid, function(g) any(rank(g) != 1:length(g))))) stop("grid support is not in increasing order!") 
+  if (any(sapply(grid, length) < 2)) stop("At least 2 grid supports per contrast are needed!")  
 
-  if (mc.cores == 1){
-    srdp <- list()
-    optpar <- list()
-    for (i in 1:nrow(CM)){
-      K <- CM[i,]
-      glmpro <- glm_profiling(object, K, control, margin=mmat[i,])
-      srdp[[i]] <- glmpro[[1]]
-      optpar[[i]] <- glmpro[[2]]
-    }
-  } else {
-    require(parallel)
-    cl <- makeCluster(mc.cores)
-    glmpro <- parLapply(cl, 1:nrow(CM), function(i, CM, object, control, mmat, glm_profiling){
-      K <- CM[i,]
-      glm_profiling(object, K, control, margin=mmat[i,])      
-    }, CM=CM, object=object, control=control, mmat=mmat, glm_profiling=mcprofile:::glm_profiling)
-    stopCluster(cl)
-    srdp <- lapply(glmpro, function(x) x[[1]])
-    optpar <- lapply(glmpro, function(x) x[[2]])
-  }
-  names(srdp) <- names(optpar) <- rownames(CM)
-  
+  ## model info
+  est <- coefficients(object)
+  OriginalDeviance <- object$deviance
+  DispersionParameter <- summary(object)$dispersion ### Dispersion estimate @ every step needed?
+  mf <- model.frame(object)
+  Y <- model.response(mf)
+  n <- NROW(Y)
+  O <- model.offset(mf)
+  if (!length(O)) O <- rep(0, n)
+  W <- model.weights(mf)
+  if (length(W) == 0L) W <- rep(1, n)
+  X <- model.matrix(object)
+  fam <- family(object)
+  etastart <- X %*% est
+  glmcontrol <- object$control
+
+  ## profiling
+  srdp <- list()
+  optpar <- list()
+  for (i in 1:nrow(CM)){
+    K <- CM[i,,drop=FALSE]
+    glmpro <- glm_profiling(X, Y, W, etastart, O, fam, glmcontrol, est, OriginalDeviance, DispersionParameter, K, grid[[i]])
+    srdp[[i]] <- glmpro[[1]]
+    optpar[[i]] <- glmpro[[2]]
+  }  
+    
   out <- list()
   out$object <- object
   out$CM <- CM
@@ -54,16 +54,16 @@ function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1){
 }
 
 mcprofile.lm <-
-function(object, CM, control=mcprofileControl(), margin=NULL, mc.cores=1){
+function(object, CM, control=mcprofileControl(), grid=NULL){
   oc <- as.list(object$call)
   oc$family <- call("gaussian")
   oc[[1]] <- as.symbol("glm")
   object <- eval(as.call(oc))
-  mcprofile.glm(object, CM=CM, control=control, margin=margin)
+  mcprofile.glm(object, CM=CM, control=control, grid=grid)
 }
 
 
 mcprofileControl <-
-function(steps=8, alphamax=0.001, maxsteps=200){
-  list(steps=steps, alphamax=alphamax, maxsteps=maxsteps)
+function(maxsteps=10, alpha=0.01, del=function(zmax) zmax/5){
+  list(maxsteps=maxsteps, alpha=alpha, del=del)
 }

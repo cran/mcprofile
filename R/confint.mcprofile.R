@@ -9,7 +9,7 @@ function(object, parm, level=0.95, adjust=c("single-step","none","bonferroni"), 
   sdlist <- object$srdp  
   spl <- lapply(sdlist, function(x){
     x <- na.omit(x)
-    try(interpSpline(x$b, x$z))
+    try(interpSpline(x[,1], x[,2]))
   })
   
   if (adjust[1] == "none" | nrow(CM) == 1){

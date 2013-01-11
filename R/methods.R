@@ -37,8 +37,7 @@ function(x, ...){
   ggplot(cidat, aes(x=Estimate, y=grp, xmin=lower, xmax=upper)) + geom_errorbarh(height=0.3) + geom_point() + ylab("") + xlab("")
 }
 
-plot.mcprofile <-
-function(x, ...){
+plot.mcprofile <- function(x, ...){
   require(ggplot2)
   require(splines)
   sdlist <- x$srdp  
@@ -51,18 +50,19 @@ function(x, ...){
 
   spl <- lapply(sdlist, function(x){
     x <- na.omit(x)
-    sp <- try(interpSpline(x$b, x$z))
-    bcoord <- seq(min(x$b), max(x$b), length=200)
+    sp <- try(interpSpline(x[,1], x[,2]))
+    bcoord <- seq(min(x[,1]), max(x[,1]), length=200)
     preds <- if (class(sp)[1] == "try-error") y <- rep(NA, 200) else predict(sp, x=bcoord)$y
     data.frame(b=bcoord, z=preds)
   })
   pgrp <- factor(rep(rownames(CM), each=200), levels=rownames(CM))
-  b2 <- unlist(lapply(spl, function(x) x[,1]))
-  z2 <- unlist(lapply(spl, function(x) x[,2]))
-  spd <- data.frame(b=b2, z=z2, grp=pgrp)
+  b <- unlist(lapply(spl, function(x) x[,1]))
+  z <- unlist(lapply(spl, function(x) x[,2]))
+  spd <- data.frame(b, z, grp=pgrp)
   
   ggplot(spd, aes(x=b, y=z)) + geom_line() + facet_wrap(~grp, scales = "free_x") + geom_hline(yintercept=0, linetype=2) + geom_point(data=sdd, shape="|")
 }
+
 print.mcpCI <-
 function(x, ...){
   cat("\n   mcprofile - Confidence Intervals \n\n")
