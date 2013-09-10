@@ -34,20 +34,18 @@ function(object, CM, control=mcprofileControl(), grid=NULL){
   glmcontrol <- object$control
 
   ## profiling
-  srdp <- list()
-  optpar <- list()
-  for (i in 1:nrow(CM)){
+  prolist <- lapply(1:nrow(CM), function(i){
     K <- CM[i,,drop=FALSE]
     glmpro <- glm_profiling(X, Y, W, etastart, O, fam, glmcontrol, est, OriginalDeviance, DispersionParameter, K, grid[[i]])
-    srdp[[i]] <- glmpro[[1]]
-    optpar[[i]] <- glmpro[[2]]
-  }  
+    return(glmpro)
+  })  
     
   out <- list()
   out$object <- object
   out$CM <- CM
-  out$srdp <- srdp
-  out$optpar <- optpar
+  out$srdp <- lapply(prolist, function(x) x[[1]])
+  out$optpar <- lapply(prolist, function(x) x[[2]])
+  out$cobject <- lapply(prolist, function(x) x[[3]])
   if (df.needed) out$df <- df.residual(object) else df <- NULL
   class(out) <- "mcprofile"
   out

@@ -1,15 +1,15 @@
-\name{wald}
-\alias{wald}
-\title{Calculate Wald-Profiles}
-\description{Transforms a signed root deviance profile of a mcprofile
-  object into a profile of Wald-type statistics}
+\name{hoa}
+\alias{hoa}
+\title{Higher order asymptotics using the modified likelihood root}
+\description{Transforms a signed root deviance profile to a modified
+  likelihood root profile.}
 \usage{
-wald(object)
+hoa(object)
 }
 \arguments{
   \item{object}{An object of class mcprofile}
 }
-\value{An object of class mcprofile with a wald profile in the srdp slot.}
+\value{An object of class mcprofile with a hoa profile in the srdp slot.}
 
 \author{Daniel Gerhard}
 
@@ -43,14 +43,13 @@ CM <- contrMat(table(cta$concf), type="Dunnett")
 # calculating signed root deviance profiles
 (dmcp <- mcprofile(fm, CM))
 # computing profiles for the modified likelihood root
-wp <- wald(dmcp)
+hp <- hoa(dmcp)
 
-plot(wp)
+plot(hp)
 
 # comparing confidence intervals
-confint(wp)
+confint(hp)
 confint(dmcp)
 }
-
 
 \keyword{ misc }

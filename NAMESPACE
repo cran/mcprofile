@@ -1,4 +1,4 @@
-export(mcprofile, orglm.fit, wald, mcprofileControl)
+export(mcprofile, orglm.fit, wald, hoa, mcprofileControl)
 exportClasses("mcprofile", "mcpCI", "mcpSummary", "mcprofileControl")
 
 S3method(mcprofile, lm)

@@ -5,7 +5,11 @@ constructGrid <- function(object, CM, control){
   n <- NROW(object$y)
   p <- length(est)
   
-  zmax <- sqrt(qf(1 - control$alpha/nrow(CM), 1, n - p))
+  if (n > p){
+    zmax <- sqrt(qf(1 - control$alpha/nrow(CM), 1, n - p))
+  } else {
+    zmax <- sqrt(qchisq(1 - control$alpha/nrow(CM), 1))
+  }
   del <- control$del(zmax)
   sst <- c(-1*(control$maxsteps:1), 0:control$maxsteps)
 

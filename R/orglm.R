@@ -3,25 +3,19 @@ orglm.fit <- function (x, y, weights = rep(1, nobs), start = NULL, etastart = NU
 
   ###################
   orr <- function(x, y, constr, rhs, nec){
-    require(quadprog)
     unc <- lm.fit(x, y)
     tBeta <- as.vector(coefficients(unc))
-    Sigma <- (t(residuals(unc)) %*% residuals(unc))/nrow(x)
-    detU <- 1
-    y <- cbind(y)
-    orsolve <- function(tBeta, x, y, Constr, RHS, NEC) {
-      Sigma <- (t(y - x %*% matrix(tBeta, ncol = ncol(y))) %*% (y - x %*% matrix(tBeta, ncol = ncol(y))))/nrow(x)
-      yVx <- kronecker(solve(Sigma), t(x)) %*% as.vector(y)
-      dvec <- 2 * yVx
-      Dmat <- 2 * kronecker(solve(Sigma), t(x) %*% x)
+    invW <- t(x) %*% x
+    orsolve <- function(tBeta, invW, Constr, RHS, NEC) {
+      Dmat <- 2 * invW
+      dvec <- 2 * tBeta %*% invW
       Amat <- t(Constr)
-      bvec <- RHS
-      solve.QP(Dmat, dvec, Amat, bvec = bvec, meq = NEC)
+      solve.QP(Dmat, dvec, Amat, bvec = RHS, meq = NEC)
     }
     orBeta <- tBeta
     val <- 0
     for (i in 1:control$maxit) {
-      sqp <- orsolve(orBeta, x, y, constr, rhs, nec)
+      sqp <- orsolve(orBeta, invW, constr, rhs, nec)
       orBeta <- sqp$solution
       if (abs(sqp$value - val) <= control$epsilon) 
         break
@@ -29,7 +23,7 @@ orglm.fit <- function (x, y, weights = rep(1, nobs), start = NULL, etastart = NU
     }
     return(list(coefficients=orBeta))
   }
-
+  
   ###############
   control <- do.call("glm.control", control)
   x <- as.matrix(x)
@@ -197,7 +191,7 @@ orglm.fit <- function (x, y, weights = rep(1, nobs), start = NULL, etastart = NU
   fit$rank <- rank <- if (EMPTY) 0 else qr(x)$rank
   resdf <- n.ok - rank
   #aic.model <- aic(y, n, mu, weights, dev) + 2 * rank
-  fit <- list(coefficients = coef, residuals = residuals, fitted.values = mu, rank=rank, family = family, linear.predictors = eta, deviance = dev, null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights, df.residual = resdf, df.null = nulldf, y = y, converged = conv, boundary = boundary, aic=NA)
+  fit <- list(coefficients = coef, residuals = residuals, fitted.values = mu, rank=rank, family = family, linear.predictors = eta, deviance = dev, null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights, df.residual = resdf, df.null = nulldf, y = y, X=x, converged = conv, boundary = boundary, aic=NA, constr=constr, rhs=rhs, nec=nec)
   class(fit) <- c("orglm", "glm", "lm")
   return(fit)
 }

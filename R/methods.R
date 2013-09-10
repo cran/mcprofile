@@ -14,7 +14,6 @@ function(x){
 }
 plot.mcpCI <-
 function(x, ...){
-  require(ggplot2)
   Estimate <- x$estimate
   CM <- x$CM
   grp <- factor(rownames(CM), levels=rownames(CM)[nrow(CM):1])
@@ -38,8 +37,6 @@ function(x, ...){
 }
 
 plot.mcprofile <- function(x, ...){
-  require(ggplot2)
-  require(splines)
   sdlist <- x$srdp  
   CM <- x$CM
   nr <- sapply(sdlist, nrow)
@@ -77,7 +74,11 @@ function(x, ...){
   est <- x$CM %*% coefficients(x$object)
   vest <- x$CM %*% vcov(x$object) %*% t(x$CM)
   sdest <- sqrt(diag(vest))
-  print(data.frame(Estimate=est, Std.err=sdest), digits=3)
+  if (is.null(x$adjestimates)){
+    print(data.frame(Estimate=est, Std.err=sdest), digits=3)
+  } else {
+    print(data.frame(Estimate=est, Std.err=sdest, adjEstimate=x$adjestimates), digits=3)
+  }
   cat("\n")
 }
 print.mcpSummary <-
