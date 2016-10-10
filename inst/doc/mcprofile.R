@@ -4,7 +4,7 @@ library(knitr)
 ## ----package, echo=FALSE, message=FALSE----------------------------------
 library(mcprofile)
 
-## ----, ctadata-----------------------------------------------------------
+## ---- ctadata------------------------------------------------------------
 data(cta)
 str(cta)
 cta$concf <- factor(cta$conc, levels=unique(cta$conc))
