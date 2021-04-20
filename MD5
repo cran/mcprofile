@@ -1,4 +1,4 @@
-88d8a2bfc1448bf92a91bf1dd912c82c *DESCRIPTION
+f065391790707e4e0945df1ee6d198ac *DESCRIPTION
 829a8dbe636fbd37eb74de684bf4fe9d *NAMESPACE
 2b627aaeeaf56d96d8257706ad6c97f6 *R/confint.mcprofile.R
 156bf39b9164032dc74d1a9e6bc442ea *R/constructGrid.R
@@ -14,14 +14,14 @@ a4967e06932288b571bf58a7c5eb2afe *R/detvarorglm.R
 0ccc98127477235b7cb8edec5843a792 *R/orglm.R
 26bfc45580ac9e7dd27e712b6972faa1 *R/summary.mcprofile.R
 98f0165e36fea717e55bcac94fbf2c48 *R/wald.R
-66b1bc421a4d633fe99f22368f474605 *build/vignette.rds
+a39bb643c75ea0a7e9ee04e78f2e15c3 *build/vignette.rds
 b2b3acea94105a84f3f14fd68d3b9367 *data/aphidlight.rda
 c8122707b5b91f59a6f26c820602b0d8 *data/cta.rda
 5f7d6a245a28ada2b6d6511494abbe1f *data/toxinLD.rda
 eeee6e3e3e3efa803c836caaf282caa4 *inst/CITATION
 d54162fbed8e852e74e1b9c8fe9a8284 *inst/doc/mcprofile.R
 1d4180a51b4a139fef5089ec05246de7 *inst/doc/mcprofile.Rmd
-31495ed153ad2e3a6f0907856f6b64e0 *inst/doc/mcprofile.html
+29a4495814a9667e3ceff2213567c10d *inst/doc/mcprofile.html
 36c72831cf1c98820002f84aa8f0b612 *man/aphidlight.Rd
 e79ad956350e869c3c585a0907e5e1cb *man/confint.mcprofile.Rd
 82369c0621a879772ecc50e0fb36c1c0 *man/cta.Rd
